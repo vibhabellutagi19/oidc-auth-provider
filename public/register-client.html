@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sign Up</title>
+    <title>Register Client Application</title>
     <style>
       *,
       *::before,
@@ -23,6 +23,7 @@
         --bg: #f9fafb;
         --surface: #ffffff;
         --error: #dc2626;
+        --success: #059669;
       }
 
       body {
@@ -43,7 +44,7 @@
         box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
         padding: 2.5rem 2rem;
         width: 100%;
-        max-width: 400px;
+        max-width: 500px;
       }
 
       .logo {
@@ -89,8 +90,7 @@
       }
 
       input[type="text"],
-      input[type="email"],
-      input[type="password"] {
+      input[type="url"] {
         width: 100%;
         padding: 0.625rem 0.875rem;
         border: 1.5px solid var(--border);
@@ -105,8 +105,7 @@
       }
 
       input[type="text"]:focus,
-      input[type="email"]:focus,
-      input[type="password"]:focus {
+      input[type="url"]:focus {
         border-color: var(--primary);
         box-shadow: 0 0 0 3px rgba(222, 115, 86, 0.15);
       }
@@ -146,12 +145,6 @@
         border: 1px solid #fca5a5;
       }
 
-      .name-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.75rem;
-      }
-
       button[type="submit"] {
         width: 100%;
         padding: 0.75rem;
@@ -176,55 +169,24 @@
         transform: scale(0.98);
       }
 
-      .terms {
-        font-size: 0.8125rem;
-        color: var(--text-muted);
-        margin-top: 1rem;
-        text-align: center;
-        line-height: 1.5;
+      button[type="submit"]:disabled {
+        background: var(--text-muted);
+        cursor: not-allowed;
+        transform: none;
       }
 
-      .terms a {
+      .back-link {
+        text-align: center;
+        margin-top: 1.5rem;
+      }
+
+      .back-link a {
         color: var(--primary);
         text-decoration: none;
         font-weight: 500;
       }
 
-      .terms a:hover {
-        color: var(--primary-dark);
-        text-decoration: underline;
-      }
-
-      .divider {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        margin: 1.5rem 0;
-        color: var(--text-muted);
-        font-size: 0.8125rem;
-      }
-
-      .divider::before,
-      .divider::after {
-        content: "";
-        flex: 1;
-        height: 1px;
-        background: var(--border);
-      }
-
-      .signin {
-        text-align: center;
-        font-size: 0.875rem;
-        color: var(--text-muted);
-      }
-
-      .signin a {
-        color: var(--primary);
-        font-weight: 500;
-        text-decoration: none;
-      }
-
-      .signin a:hover {
+      .back-link a:hover {
         color: var(--primary-dark);
         text-decoration: underline;
       }
@@ -240,109 +202,86 @@
         </svg>
       </div>
 
-      <h1>Create an account</h1>
-      <p class="subtitle">Get started — it only takes a minute</p>
+      <h1>Register Client Application</h1>
+      <p class="subtitle">Add a new OAuth/OIDC client application</p>
 
-      <form id="signup-form" novalidate>
-        <div class="name-row">
-          <div class="field" id="field-firstname">
-            <label for="firstname">First name</label>
-            <input
-              type="text"
-              id="firstname"
-              name="firstname"
-              placeholder="Jane"
-              autocomplete="given-name"
-              required
-            />
-            <span class="field-error" id="error-firstname">Required.</span>
-          </div>
-
-          <div class="field" id="field-lastname">
-            <label for="lastname">Last name</label>
-            <input
-              type="text"
-              id="lastname"
-              name="lastname"
-              placeholder="Doe"
-              autocomplete="family-name"
-              required
-            />
-            <span class="field-error" id="error-lastname">Required.</span>
-          </div>
-        </div>
-
-        <div class="field" id="field-email">
-          <label for="email">Email address</label>
+      <form id="client-form" novalidate>
+        <div class="field" id="field-name">
+          <label for="name">Application Display Name</label>
           <input
-            type="email"
-            id="email"
-            name="email"
-            placeholder="you@example.com"
-            autocomplete="email"
+            type="text"
+            id="name"
+            name="name"
+            placeholder="My Awesome App"
+            autocomplete="off"
             required
           />
-          <span class="field-error" id="error-email"
-            >Please enter a valid email address.</span
+          <span class="field-error" id="error-name"
+            >Application name is required.</span
           >
         </div>
 
-        <div class="field" id="field-password">
-          <label for="password">Password</label>
+        <div class="field" id="field-url">
+          <label for="url">Application URL</label>
           <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder="Min. 8 characters"
-            autocomplete="new-password"
+            type="url"
+            id="url"
+            name="url"
+            placeholder="https://myapp.com"
+            autocomplete="off"
             required
           />
-          <span class="field-error" id="error-password"
-            >Password must be at least 8 characters.</span
+          <span class="field-error" id="error-url"
+            >Please enter a valid URL.</span
           >
         </div>
 
-        <div class="field" id="field-confirm">
-          <label for="confirm">Confirm password</label>
+        <div class="field" id="field-redirect">
+          <label for="redirect">Redirect URI</label>
           <input
-            type="password"
-            id="confirm"
-            name="confirm"
-            placeholder="••••••••"
-            autocomplete="new-password"
+            type="url"
+            id="redirect"
+            name="redirect"
+            placeholder="https://myapp.com/callback"
+            autocomplete="off"
             required
           />
-          <span class="field-error" id="error-confirm"
-            >Passwords do not match.</span
+          <span class="field-error" id="error-redirect"
+            >Please enter a valid redirect URI.</span
           >
         </div>
 
-        <button type="submit" id="submit-btn">Create account</button>
+        <button type="submit" id="submit-btn">Register Application</button>
       </form>
 
       <div id="message" class="message" style="display: none"></div>
 
-      <p class="terms">
-        By creating an account you agree to our
-        <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
-      </p>
-
-      <div class="divider">or</div>
-
-      <p class="signin">
-        Already have an account? <a href="/o/authorize">Sign in</a>
-      </p>
+      <div class="back-link">
+        <a href="/o/authorize">← Back to Authentication</a>
+      </div>
     </div>
 
     <script>
-      const form = document.getElementById("signup-form");
+      const form = document.getElementById("client-form");
 
       const validators = {
-        firstname: (v) => v.trim().length > 0,
-        lastname: (v) => v.trim().length > 0,
-        email: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
-        password: (v) => v.length >= 8,
-        confirm: (v) => v === document.getElementById("password").value,
+        name: (v) => v.trim().length > 0,
+        url: (v) => {
+          try {
+            new URL(v);
+            return true;
+          } catch {
+            return false;
+          }
+        },
+        redirect: (v) => {
+          try {
+            new URL(v);
+            return true;
+          } catch {
+            return false;
+          }
+        },
       };
 
       function validate(id) {
@@ -368,21 +307,20 @@
         const messageDiv = document.getElementById("message");
 
         submitBtn.disabled = true;
-        submitBtn.textContent = "Creating account...";
+        submitBtn.textContent = "Registering...";
 
         messageDiv.style.display = "none";
         messageDiv.className = "message";
 
         const formData = new FormData(form);
         const data = {
-          firstName: formData.get("firstname"),
-          lastName: formData.get("lastname"),
-          email: formData.get("email"),
-          password: formData.get("password"),
+          name: formData.get("name"),
+          url: formData.get("url"),
+          redirectUri: formData.get("redirect"),
         };
 
         try {
-          const response = await fetch("/o/signup", {
+          const response = await fetch("/o/clients", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -393,7 +331,8 @@
           if (response.ok) {
             const result = await response.json();
             messageDiv.textContent =
-              "User created successfully! You can now sign in.";
+              "Client application registered successfully! Client ID: " +
+              result.data.clientId;
             messageDiv.classList.add("success");
             messageDiv.style.display = "block";
             form.reset();
@@ -409,7 +348,7 @@
           messageDiv.style.display = "block";
         } finally {
           submitBtn.disabled = false;
-          submitBtn.textContent = "Create account";
+          submitBtn.textContent = "Register Application";
         }
       });
     </script>
