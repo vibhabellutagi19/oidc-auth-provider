@@ -1,4 +1,4 @@
-import { HTTP_STATUS } from "../constants/http-status";
+import { HTTP_STATUS } from "../constants/http-status.js";
 import type { Response } from "express";
 
 class ApiResponse {

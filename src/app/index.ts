@@ -1,6 +1,6 @@
 import express, { Express, Request, Response } from "express";
-import ApiResponse from "../common/app-response";
-import { oidcAuthRouter } from "./oidc-auth/routes/oidc-auth.routes";
+import ApiResponse from "../common/api-response.js";
+import { oidcAuthRouter } from "./oidc-auth/routes/oidc-auth.routes.js";
 import path from "node:path";
 
 export function createExpressApplication(): Express {
