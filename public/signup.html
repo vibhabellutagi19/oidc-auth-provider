@@ -121,6 +121,26 @@
         display: block;
       }
 
+      .message {
+        margin-top: 1rem;
+        padding: 0.75rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        text-align: center;
+      }
+
+      .message.success {
+        background-color: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+      }
+
+      .message.error {
+        background-color: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+      }
+
       .name-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -282,8 +302,10 @@
           <span class="field-error" id="error-confirm">Passwords do not match.</span>
         </div>
 
-        <button type="submit">Create account</button>
+        <button type="submit" id="submit-btn">Create account</button>
       </form>
+
+      <div id="message" class="message" style="display: none;"></div>
 
       <p class="terms">
         By creating an account you agree to our
@@ -292,7 +314,7 @@
 
       <div class="divider">or</div>
 
-      <p class="signin">Already have an account? <a href="authenticate.html">Sign in</a></p>
+      <p class="signin">Already have an account? <a href="/o/authenticate">Sign in</a></p>
     </div>
 
     <script>
@@ -318,10 +340,57 @@
         document.getElementById(id).addEventListener("input", () => validate(id));
       });
 
-      form.addEventListener("submit", (e) => {
+      form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const allValid = Object.keys(validators).map(validate).every(Boolean);
-        if (allValid) form.submit();
+        if (!allValid) return;
+
+        const submitBtn = document.getElementById("submit-btn");
+        const messageDiv = document.getElementById("message");
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Creating account...";
+
+        messageDiv.style.display = "none";
+        messageDiv.className = "message";
+
+        const formData = new FormData(form);
+        const data = {
+          firstName: formData.get('firstname'),
+          lastName: formData.get('lastname'),
+          email: formData.get('email'),
+          password: formData.get('password')
+        };
+
+        try {
+          const response = await fetch('/o/signup', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            messageDiv.textContent = "User created successfully! You can now sign in.";
+            messageDiv.classList.add("success");
+            messageDiv.style.display = "block";
+            form.reset();
+          } else {
+            const error = await response.json();
+            messageDiv.textContent = "Error: " + error.message;
+            messageDiv.classList.add("error");
+            messageDiv.style.display = "block";
+          }
+        } catch (error) {
+          messageDiv.textContent = "Network error: " + error.message;
+          messageDiv.classList.add("error");
+          messageDiv.style.display = "block";
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Create account";
+        }
       });
     </script>
   </body>

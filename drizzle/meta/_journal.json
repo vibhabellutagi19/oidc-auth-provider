@@ -8,6 +8,20 @@
       "when": 1776872814384,
       "tag": "0000_silky_killer_shrike",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776877562541,
+      "tag": "0001_young_annihilus",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776877661537,
+      "tag": "0002_clear_norrin_radd",
+      "breakpoints": true
     }
   ]
 }
