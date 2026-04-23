@@ -14,7 +14,10 @@ OIDC builds on OAuth 2.0, adding identity layer features like standardized user 
 6. Provider returns JWT `access_token` (Bearer).
 7. Client calls `GET /o/userinfo` with `Authorization: Bearer <access_token>` to fetch user profile claims.
 
+![image](/image.png)
+
 Why 2 steps after sign-in:
+
 - sign-in page only proves user identity and gives an authorization code.
 - token exchange proves client identity and returns token for protected APIs.
 
