@@ -42,6 +42,9 @@ importers:
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
+      '@types/node-jose':
+        specifier: ^1.1.13
+        version: 1.1.13
       '@types/pg':
         specifier: ^8.20.0
         version: 8.20.0
@@ -535,6 +538,9 @@ packages:
 
   '@types/ms@2.1.0':
     resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
+
+  '@types/node-jose@1.1.13':
+    resolution: {integrity: sha512-QjMd4yhwy1EvSToQn0YI3cD29YhyfxFwj7NecuymjLys2/P0FwxWnkgBlFxCai6Y3aBCe7rbwmqwJJawxlgcXw==}
 
   '@types/node@25.6.0':
     resolution: {integrity: sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ==}
@@ -1441,6 +1447,10 @@ snapshots:
       '@types/node': 25.6.0
 
   '@types/ms@2.1.0': {}
+
+  '@types/node-jose@1.1.13':
+    dependencies:
+      '@types/node': 25.6.0
 
   '@types/node@25.6.0':
     dependencies:

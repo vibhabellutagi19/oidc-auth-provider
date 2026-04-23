@@ -6,6 +6,19 @@ import path from "node:path";
 
 export function createExpressApplication(): Express {
   const app = express();
+
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    res.header("Access-Control-Allow-Origin", "http://localhost:5173");
+    res.header("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(204);
+    }
+
+    return next();
+  });
+
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 

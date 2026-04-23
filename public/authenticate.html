@@ -395,7 +395,7 @@
         };
 
         // Build URL with OAuth parameters
-        let authUrl = "/o/authorize";
+        let authUrl = "/o/authenticate";
         const params = new URLSearchParams();
         if (clientId) params.append("client_id", clientId);
         if (redirectUri) params.append("redirect_uri", redirectUri);

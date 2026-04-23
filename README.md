@@ -4,6 +4,20 @@ A simple OpenID Connect (OIDC) authentication provider built with Node.js, Expre
 
 OIDC builds on OAuth 2.0, adding identity layer features like standardized user profile information and authentication flows.
 
+## How The Flow Works (Current Implementation)
+
+1. Register a client using `POST /o/clients` and save `client_id` and `client_secret`.
+2. Open `GET /o/authenticate?client_id=...&redirect_uri=...&state=...`.
+3. User signs in on the provider page; server validates credentials and creates a short-lived authorization code.
+4. Provider redirects browser to `redirect_uri?code=...&state=...`.
+5. Client exchanges code with `POST /o/tokeninfo` using `{ code, client_secret }`.
+6. Provider returns JWT `access_token` (Bearer).
+7. Client calls `GET /o/userinfo` with `Authorization: Bearer <access_token>` to fetch user profile claims.
+
+Why 2 steps after sign-in:
+- sign-in page only proves user identity and gives an authorization code.
+- token exchange proves client identity and returns token for protected APIs.
+
 ## OIDC Flow
 
 This provider implements a basic OIDC Authorization Code Flow with the following endpoints:
