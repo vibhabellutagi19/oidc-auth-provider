@@ -1,0 +1,1 @@
+ALTER TABLE "clients" ALTER COLUMN "short_code" SET DATA TYPE varchar(50);

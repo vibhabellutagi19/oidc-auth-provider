@@ -36,6 +36,13 @@
       "when": 1776891393386,
       "tag": "0004_sharp_phantom_reporter",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1776893674918,
+      "tag": "0005_loose_bruce_banner",
+      "breakpoints": true
     }
   ]
 }

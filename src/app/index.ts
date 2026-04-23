@@ -1,5 +1,6 @@
-import express, { Express, Request, Response } from "express";
+import express, { Express, Request, Response, NextFunction } from "express";
 import ApiResponse from "../common/api-response.js";
+import ApiError from "../common/api-error.js";
 import { oidcAuthRouter } from "./oidc-auth/routes/oidc-auth.routes.js";
 import path from "node:path";
 
@@ -14,5 +15,25 @@ export function createExpressApplication(): Express {
 
   app.use("/o", oidcAuthRouter);
   app.use(express.static(path.resolve("public")));
+
+  // Error handling middleware
+  app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
+    if (error instanceof ApiError) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+        error: error.error,
+      });
+    }
+
+    // Handle other errors
+    console.error("Unhandled error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: "InternalServerError",
+    });
+  });
+
   return app;
 }

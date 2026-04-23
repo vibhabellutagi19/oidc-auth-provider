@@ -13,11 +13,11 @@ oidcAuthRouter.get(
 
 //1. Authorization Endpoint
 
-oidcAuthRouter.get("/authorize", (req, res) => {
+oidcAuthRouter.get("/authenticate", (req, res) => {
   return authController.authorize(req, res);
 });
 
-oidcAuthRouter.post("/authorize", authController.handleAuthorizationRequest);
+oidcAuthRouter.post("/authenticate", authController.handleAuthenticateRequest);
 //2. sign-in page
 oidcAuthRouter.post("/signin", authController.handleSignin);
 
@@ -42,4 +42,4 @@ oidcAuthRouter.get("/userinfo", authController.userInfo);
 oidcAuthRouter.get("/.well-known/jwks.json", authController.getJwkInfo);
 
 // 7. Token Endpoint
-oidcAuthRouter.post("/token", authController.handleTokenInfoRequest);
+oidcAuthRouter.post("/tokeninfo", authController.handleTokenInfoRequest); // for internals

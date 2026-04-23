@@ -6,21 +6,14 @@ import { eq } from "drizzle-orm";
 import crypto from "crypto";
 import ApiError from "../../../common/api-error.js";
 import ApiResponse from "../../../common/api-response.js";
-import jwt from "jsonwebtoken";
-import { PRIVATE_KEY, PUBLIC_KEY } from "../../../common/certs.js";
+import { PUBLIC_KEY } from "../../../common/certs.js";
+import {
+  buildAccessTokenClaims,
+  signAccessToken,
+  verifyAccessToken,
+  type JWTClaims,
+} from "../../../common/jwt-utils.js";
 import * as jose from "node-jose";
-
-export interface JWTClaims {
-  iss: string;
-  sub: string;
-  email: string;
-  email_verified: boolean;
-  exp: number;
-  family_name?: string | undefined;
-  given_name: string | undefined;
-  name: string | undefined;
-  picture?: string | undefined;
-}
 
 const PORT = process.env.PORT || 3000;
 export class OidcAuthController {
@@ -28,7 +21,7 @@ export class OidcAuthController {
     return res.sendFile(path.resolve("public", "authenticate.html"));
   }
 
-  public async handleAuthorizationRequest(req: Request, res: Response) {
+  public async handleAuthenticateRequest(req: Request, res: Response) {
     if (req.method === "GET") {
       // Serve the authentication page
       return res.sendFile(path.resolve("public", "authenticate.html"));
@@ -39,7 +32,7 @@ export class OidcAuthController {
     const { email, password } = req.body;
 
     if (!client_id || typeof client_id !== "string") {
-      return ApiError.badRequest("Missing or invalid client_id");
+      throw ApiError.badRequest("Missing or invalid client_id");
     }
 
     const [client] = await db
@@ -49,24 +42,24 @@ export class OidcAuthController {
       .limit(1);
 
     if (!client) {
-      return ApiError.badRequest("Invalid client_id");
+      throw ApiError.badRequest("Invalid client_id");
     }
 
     const targetRedirectUri =
       typeof redirect_uri === "string" ? redirect_uri : client.redirectUri;
 
     if (!targetRedirectUri) {
-      return ApiError.badRequest("Missing redirect_uri");
+      throw ApiError.badRequest("Missing redirect_uri");
     }
 
     if (targetRedirectUri !== client.redirectUri) {
-      return ApiError.badRequest(
+      throw ApiError.badRequest(
         "redirect_uri does not match registered client",
       );
     }
 
     if (!email || !password) {
-      return ApiError.unauthorized("Email and Password are required");
+      throw ApiError.unauthorized("Email and Password are required");
     }
 
     const [user] = await db
@@ -76,7 +69,7 @@ export class OidcAuthController {
       .limit(1);
 
     if (!user) {
-      return ApiError.unauthorized("Invalid email or password");
+      throw ApiError.unauthorized("Invalid email or password");
     }
 
     const hashedPassword = crypto
@@ -85,7 +78,7 @@ export class OidcAuthController {
       .digest("hex");
 
     if (hashedPassword !== user.password) {
-      return ApiError.unauthorized("Invalid email or password");
+      throw ApiError.unauthorized("Invalid email or password");
     }
 
     const shortCode = crypto.randomBytes(10).toString("hex");
@@ -116,7 +109,7 @@ export class OidcAuthController {
       authorization_endpoint: `${issuer}/o/authorize`,
       token_endpoint: `${issuer}/o/token`,
       userinfo_endpoint: `${issuer}/o/userinfo`,
-      jwks_uri: `${issuer}/o/jwks`,
+      jwks_uri: `${issuer}/.well-known/jwks.json`,
     };
     return res.json(response);
   }
@@ -193,13 +186,7 @@ export class OidcAuthController {
       return ApiError.notFound("Client not found");
     }
 
-    return res.json({
-      success: true,
-      client: {
-        name: client.name,
-        url: client.url,
-      },
-    });
+    return ApiResponse.ok(res, client, "Client info retrieved successfully");
   }
 
   public async registerClient(req: Request, res: Response) {
@@ -270,24 +257,8 @@ export class OidcAuthController {
       return ApiError.unauthorized("Invalid email or password");
     }
 
-    const ISSUER = `https://localhost:${PORT}`;
-
-    const now = Math.floor(Date.now() / 1000);
-
-    const claims: JWTClaims = {
-      iss: ISSUER,
-      sub: user.id,
-      email: user.email,
-      email_verified: user.emailVerified,
-      exp: now + 3600, // 1 hour expiration
-      given_name: user.firstName ?? undefined,
-      family_name: user.lastName ?? undefined,
-      name:
-        [user.firstName, user.lastName].filter(Boolean).join(" ") || undefined,
-      picture: user.profileImageURL ?? undefined,
-    };
-
-    const token = jwt.sign(claims, PRIVATE_KEY, { algorithm: "HS256" });
+    const claims = buildAccessTokenClaims(user);
+    const token = signAccessToken(claims);
 
     return ApiResponse.ok(res, { token }, "Authentication successful");
   }
@@ -307,9 +278,7 @@ export class OidcAuthController {
 
     let claims: JWTClaims;
     try {
-      claims = jwt.verify(token, PUBLIC_KEY, {
-        algorithms: ["HS256"],
-      }) as JWTClaims;
+      claims = verifyAccessToken(token);
     } catch (err) {
       return ApiError.unauthorized("Invalid or expired token");
     }
@@ -339,77 +308,58 @@ export class OidcAuthController {
   }
 
   public async handleTokenInfoRequest(req: Request, res: Response) {
-    const { grant_type, code, client_id, client_secret, redirect_uri } =
-      req.body;
+    const { code, client_secret } = req.body;
 
-    if (grant_type !== "authorization_code") {
+    if (!code || !client_secret) {
       return ApiError.badRequest(
-        "Invalid grant_type. Must be 'authorization_code'",
+        "Code, client_id and client_secret are required",
       );
     }
 
-    if (!code) {
-      return ApiError.badRequest("Authorization code is required");
-    }
-
-    if (!client_secret) {
-      return ApiError.badRequest("Client secret is required");
-    }
-
-    // Find client by client_secret
     const [client] = await db
       .select()
       .from(clientsTable)
       .where(eq(clientsTable.clientSecret, client_secret))
       .limit(1);
 
-    if (!client) {
-      return ApiError.badRequest("Invalid client secret");
+    if (!client || !client.authorizedUserId) {
+      return ApiError.unauthorized(
+        "Invalid client_secret or authorized user not found",
+      );
     }
 
-    // If client_id is provided, verify it matches
-    if (client_id && client.clientId !== client_id) {
-      return ApiError.badRequest("Client ID mismatch");
+    if (client.shortCode !== code) {
+      return ApiError.unauthorized("Invalid code");
     }
 
-    // Verify the authorization code
-    if (
-      client.shortCode !== code ||
-      !client.shortCodeExpiresAt ||
-      client.shortCodeExpiresAt < new Date() ||
-      !client.authorizedUserId
-    ) {
-      return ApiError.badRequest("Invalid or expired authorization code");
+    if (client.shortCodeExpiresAt && client.shortCodeExpiresAt < new Date()) {
+      return ApiError.unauthorized("Code expired");
     }
 
-    // If redirect_uri is provided, verify it matches
-    if (redirect_uri && redirect_uri !== client.redirectUri) {
-      return ApiError.badRequest("Redirect URI mismatch");
+    const [user] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, client.authorizedUserId))
+      .limit(1);
+
+    if (!user) {
+      return ApiError.unauthorized("Authorized user not found");
     }
 
     const refreshToken = crypto.randomBytes(32).toString("hex");
     const refreshTokenExpiresAt = new Date(
-      Date.now() + 7 * 24 * 60 * 60 * 1000,
-    ); // 7 days
+      Date.now() + 30 * 24 * 60 * 60 * 1000,
+    ); // 30 days
 
-    const accessToken = crypto.randomBytes(32).toString("hex");
-    const accessTokenExpiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const accessToken = signAccessToken(buildAccessTokenClaims(user));
 
-    const [newToken] = await db
-      .insert(tokensTable)
-      .values({
-        userId: client.authorizedUserId,
-        clientId: client.id,
-        refreshToken,
-        refreshTokenExpiresAt,
-      })
-      .returning({ id: tokensTable.id });
+    await db.insert(tokensTable).values({
+      refreshToken,
+      refreshTokenExpiresAt,
+      clientId: client.id,
+      userId: client.authorizedUserId,
+    });
 
-    if (!newToken) {
-      return ApiError.internalServerError("Failed to create tokens");
-    }
-
-    // Clear the short code after use
     await db
       .update(clientsTable)
       .set({
@@ -419,10 +369,14 @@ export class OidcAuthController {
       })
       .where(eq(clientsTable.id, client.id));
 
-    return res.json({
-      access_token: accessToken,
-      token_type: "Bearer",
-      expires_in: 3600, // 1 hour
-    });
+    return ApiResponse.ok(
+      res,
+      {
+        access_token: accessToken,
+        token_type: "Bearer",
+        expires_in: 3600,
+      },
+      "Token created successfully",
+    );
   }
 }

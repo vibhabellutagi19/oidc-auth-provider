@@ -331,6 +331,10 @@
       // Get URL parameters
       const urlParams = new URLSearchParams(window.location.search);
       const clientId = urlParams.get("client_id");
+      const redirectUri = urlParams.get("redirect_uri");
+      const state = urlParams.get("state");
+      const responseType = urlParams.get("response_type");
+      const scope = urlParams.get("scope");
 
       // Fetch client information
       if (clientId) {
@@ -390,8 +394,21 @@
           password: formData.get("password"),
         };
 
+        // Build URL with OAuth parameters
+        let authUrl = "/o/authorize";
+        const params = new URLSearchParams();
+        if (clientId) params.append("client_id", clientId);
+        if (redirectUri) params.append("redirect_uri", redirectUri);
+        if (state) params.append("state", state);
+        if (responseType) params.append("response_type", responseType);
+        if (scope) params.append("scope", scope);
+
+        if (params.toString()) {
+          authUrl += "?" + params.toString();
+        }
+
         try {
-          const response = await fetch("/o/authorize", {
+          const response = await fetch(authUrl, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

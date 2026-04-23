@@ -34,7 +34,7 @@ export const clientsTable = pgTable("clients", {
   url: text("url").notNull(),
   redirectUri: text("redirect_uri").notNull(),
 
-  shortCode: varchar("short_code", { length: 10 }).unique(),
+  shortCode: varchar("short_code", { length: 50 }).unique(),
   shortCodeExpiresAt: timestamp("short_code_expires_at"),
   authorizedUserId: uuid("authorized_user_id"), // Track which user authorized this client
 
